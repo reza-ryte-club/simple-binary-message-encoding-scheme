@@ -19,7 +19,8 @@ In production environment, the utils.ts should be used as a module.
 const messageObj: Message = {
     headers: {
         'Content-Type': 'application/json',
-        'Content-Length': '1024'
+        'Content-Length': '1024',
+        'Content-Encoding': 'binary'
     },
     payload: 'This is a sample payload'
 }
