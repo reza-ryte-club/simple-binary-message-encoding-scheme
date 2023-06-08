@@ -15,7 +15,8 @@ import {
 const messageObj: Message = {
     headers: {
         'Content-Type': 'application/json',
-        'Content-Length': '1024'
+        'Content-Length': '1024',
+        'Content-Encoding': 'binary'
     },
     payload: 'This is a sample payload'
 }
@@ -56,11 +57,13 @@ const decode = (data: Uint8Array): Message => { // should return Message object
 
     // serialize header keys
     const headerKeysDeSerialized = deSerializeHeaderData(headerKeys, headerByteSize, HEADER_PROPERTY_LENGTH)
+    console.log('headerKeysDeSerialized', headerKeysDeSerialized)
     const headerValuesDeSerialized = deSerializeHeaderData(headerValues, headerByteSize, HEADER_PROPERTY_LENGTH)
+    console.log('headerValuesDeSerialized', headerValuesDeSerialized)
     const payloadDeSerialized = deSerializePayloadData(data, headerByteSize, TOTAL_BYTE_PACKET_SIZE)
-
+    console.log('payloadDeSerialized', payloadDeSerialized)
     // Construct the message object
-    for (let i = 0; i < headerKeysDeSerialized.length; i++) {
+    for (let i = 0; i < headerKeysDeSerialized.length && headerKeysDeSerialized[i].length!==0; i++) {
         decodedMessage.headers[headerKeysDeSerialized[i]] = headerValuesDeSerialized[i]
     }
     decodedMessage.payload = payloadDeSerialized
