@@ -11,7 +11,9 @@ The solution has the following attributes:
 * The message payload is limited to 256 KiB.
 
 ## Before running the project 
-As an input for the program, the sample Message object was used.
+
+As an input for the program, the sample Message object was used in the main.ts file. But the main.ts file is here for demonstration of the serializer and the deserializer.
+In production environment, the utils.ts should be used as a module.
 
 ```
 const messageObj: Message = {
