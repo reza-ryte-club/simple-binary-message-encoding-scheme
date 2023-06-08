@@ -1,16 +1,72 @@
-import { Message } from './constants'
-import {encode, decode} from './utils'
 import * as fs from 'fs'
+import {
+    Message,
+    HIGHEST_NUMBER_OF_HEADER, // 63
+    TOTAL_BYTE_PACKET_SIZE, // 391042 bytes = 391 KB
+    HEADER_PROPERTY_LENGTH // 1023 bytes
+} from "./constants"
+import {
+    serializeData,
+    deSerializeHeaderData,
+    deSerializePayloadData
+} from './utils'
 
 // Sample message object
 const messageObj: Message = {
     headers: {
         'Content-Type': 'application/json',
-        'Content-Length': '1023',
-        'Content-Encoding': 'gzip'
+        'Content-Length': '1024'
     },
-    payload: 'A sample payload'
+    payload: 'This is a sample payload'
 }
+
+
+// encode
+const encode = (message: Message): Uint8Array => { // return bytes
+    // Make sure there are less than 64 headers
+    if (Object.keys(message.headers).length > HIGHEST_NUMBER_OF_HEADER) {
+        throw new Error('There are more than 63 headers')
+    }
+    // Convert headers to 1023 byte data
+    const headerKeys = Object.keys(message.headers)
+    const headerValues = Object.keys(message.headers).map(key => message.headers[key])
+    const encodedData = serializeData(
+        headerKeys,
+        headerValues,
+        message.payload,
+        TOTAL_BYTE_PACKET_SIZE, // 391042 bytes = 391 KB
+        HIGHEST_NUMBER_OF_HEADER, // 63
+        HEADER_PROPERTY_LENGTH  // 1023 bytes
+    )
+    return encodedData
+}
+
+
+
+// decode
+const decode = (data: Uint8Array): Message => { // should return Message object
+    const decodedMessage: Message = {
+        headers: {},
+        payload: ''
+    }
+
+    const headerByteSize = HIGHEST_NUMBER_OF_HEADER * HEADER_PROPERTY_LENGTH
+    const headerKeys = data.slice(0, headerByteSize)
+    const headerValues = data.slice(headerByteSize, headerByteSize * 2)
+
+    // serialize header keys
+    const headerKeysDeSerialized = deSerializeHeaderData(headerKeys, headerByteSize, HEADER_PROPERTY_LENGTH)
+    const headerValuesDeSerialized = deSerializeHeaderData(headerValues, headerByteSize, HEADER_PROPERTY_LENGTH)
+    const payloadDeSerialized = deSerializePayloadData(data, headerByteSize, TOTAL_BYTE_PACKET_SIZE)
+
+    // Construct the message object
+    for (let i = 0; i < headerKeysDeSerialized.length; i++) {
+        decodedMessage.headers[headerKeysDeSerialized[i]] = headerValuesDeSerialized[i]
+    }
+    decodedMessage.payload = payloadDeSerialized
+    return decodedMessage
+}
+
 
 console.log(' Data to be encoded')
 console.log('-------------------')

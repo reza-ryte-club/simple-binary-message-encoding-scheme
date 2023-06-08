@@ -1,15 +1,3 @@
-import {
-    Message,
-    HIGHEST_NUMBER_OF_HEADER,
-    TOTAL_BYTE_PACKET_SIZE,
-    HEADER_PROPERTY_LENGTH
-} from "./constants"
-
-
-export const add = (x: number, y: number): number => {
-    return x + y
-}
-
 export const serializeData = (
     keys: string[],
     values: string[],
@@ -69,7 +57,7 @@ export const deSerializeHeaderData = (
                 tempHeaderKeys += String.fromCharCode(data[k])
             }
         }
-        if (tempHeaderKeys.length > 0) { deSerializedStrings.push(tempHeaderKeys) }
+        deSerializedStrings.push(tempHeaderKeys)
     }
     return deSerializedStrings
 }
@@ -88,48 +76,3 @@ export const deSerializePayloadData = (
     return updatedPayload
 }
 
-// encode
-export const encode = (message: Message): Uint8Array => { // should return bytes, here it returns string
-    // Make sure there are less than 64 headers
-    if (Object.keys(message.headers).length > HIGHEST_NUMBER_OF_HEADER) {
-        throw new Error('There are more than 63 headers')
-    }
-    // Convert headers to 1023 byte data
-    const headerKeys = Object.keys(message.headers)
-    const headerValues = Object.keys(message.headers).map(key => message.headers[key])
-    const encodedData = serializeData(
-        headerKeys,
-        headerValues,
-        message.payload,
-        TOTAL_BYTE_PACKET_SIZE,
-        HIGHEST_NUMBER_OF_HEADER,
-        HEADER_PROPERTY_LENGTH
-    )
-    return encodedData
-}
-
-
-
-// decode
-export const decode = (data: Uint8Array): Message => { // should return Message object
-    const decodedMessage: Message = {
-        headers: {},
-        payload: ''
-    }
-
-    const headerByteSize = HIGHEST_NUMBER_OF_HEADER * HEADER_PROPERTY_LENGTH
-    const headerKeys = data.slice(0, headerByteSize)
-    const headerValues = data.slice(headerByteSize, headerByteSize * 2)
-
-    // serialize header keys
-    const headerKeysDeSerialized = deSerializeHeaderData(headerKeys, headerByteSize, HEADER_PROPERTY_LENGTH)
-    const headerValuesDeSerialized = deSerializeHeaderData(headerValues, headerByteSize, HEADER_PROPERTY_LENGTH)
-    const payloadDeSerialized = deSerializePayloadData(data, headerByteSize, TOTAL_BYTE_PACKET_SIZE)
-
-    // Construct the message object
-    for (let i = 0; i < headerKeysDeSerialized.length; i++) {
-        decodedMessage.headers[headerKeysDeSerialized[i]] = headerValuesDeSerialized[i]
-    }
-    decodedMessage.payload = payloadDeSerialized
-    return decodedMessage
-}
